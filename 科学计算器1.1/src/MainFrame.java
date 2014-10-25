@@ -1,9 +1,8 @@
 /*
  * 输入的表达式用字符转表示，用中缀转后缀的方法
  * 再处理后缀表达式
- * 运算符都是字符型，顾sin、开方等字符串型的云算法不能识别 ，且看1.1版本
  * 
- * 
+ * 此版本处理字符串型的运算符
  * */
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,12 +13,15 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Stack;
+import java.util.Vector;
 
 public class MainFrame extends JFrame{
 	private static int WIDTH=400;
 	private static int HEIGHT=500;
-	private String expression="";
-	private String newexpression="";
+	//变化
+	private Vector<String> expression=new <String>Vector();
+	private Vector<String> newexpression=new <String>Vector();
+	
 	private double result=0.0;
 	private final String strInPanel1[]={"7","8","9","+","4","5","6","-","1","2","3","*",
 			"(","0",")","/"};
@@ -87,8 +89,9 @@ public class MainFrame extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				//文本框获取按键的内容，并显示在框内
+				expression.add(((JButton)e.getSource()).getText());
 				textField.setText(textField.getText()+ ((JButton)e.getSource()).getText());
-				expression=textField.getText();
+				//expression=textField.getText();
 			}
 		};
 		//数字键，运算符，及特殊运算域都要添加     (ActionListener)showText 的监听效果
@@ -102,8 +105,8 @@ public class MainFrame extends JFrame{
 		buttonInPanel2[0].addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				result=0;
-				expression="";
-				newexpression="";
+				expression.clear();
+				newexpression.clear();
 				textField.setText("");
 				//textField.setText(String.valueOf(result));
 			}
@@ -111,8 +114,8 @@ public class MainFrame extends JFrame{
 		//Back
 		buttonInPanel2[1].addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				expression=expression.substring(0, expression.length()-1);
-				textField.setText(expression);
+				expression.remove(expression.size());
+				textField.setText(String.valueOf(expression));
 			}
 			
 		});
@@ -127,89 +130,100 @@ public class MainFrame extends JFrame{
 		);
 	}
 	//将MainFrame中的expression中缀表达式转为后缀
-	public String Trans(String oldExp){
-		String newExp="";
+	public Vector Trans(Vector<String> oldExp){
+		Vector <String> newExp=new <String>Vector();
 		int  i=0;
-		Stack<Character> s =new Stack<Character>();//char ch = 是基本类型char类型，而s.peek()返回的是object类型
+		Stack<String> s =new Stack<String>();//char ch = 是基本类型char类型，而s.peek()返回的是object类型
 		//test
-		if(oldExp==null) 
-			return "空的";
-		while(i<oldExp.length()){
-			switch(oldExp.charAt(i)){//String中根据下标取字符的方法,但注意Stack类是String类型的
-			case'(':
-				s.push(oldExp.charAt(i));
+		//if(oldExp==null) 
+			//return "空的";
+		while(i<oldExp.size()){
+			switch(oldExp.elementAt(i)){//String中根据下标取字符的方法,但注意Stack类是String类型的
+			case "(":
+				s.push(oldExp.elementAt(i));
 				i++;
 				break;
-			case ')':
-				while((!s.empty())&&s.peek()!='('){//弹到'('
-					newExp+=s.pop();
+			case ")":
+				while((!s.empty())&&s.peek()!="("){//弹到'('
+					newExp.add(s.pop());
 				}
-				while(s.peek()=='(')
-					s.pop();//将'('从栈中删掉
+				s.pop();//将'('从栈中删掉
 				i++;
 				break;
-			 case'+':
-	         case'-':
-	        	 while((!s.empty())&&s.peek()!='('){
-						newExp+=s.pop();
+			
+			//先弹栈出，直到栈顶比比elementAt(i)的优先级小
+			// >  /*  >  +-  >  
+			 case"+":
+	         case"-":
+	        	 while(!s.empty()){
+						newExp.add(s.pop());
 	        	 }
-	        	s.push(oldExp.charAt(i));
+	        	s.push(oldExp.elementAt(i));
 				i++;
 				break;
-				
-	         case'*':
-	         case'/':
-	        	 if((!s.empty())&&(s.peek()=='*'||s.peek()=='/')){
-	        		 		newExp+=s.pop();
+	         case"*":
+	         case"/":
+	        	 if((!s.empty())&&(s.peek()!="+"&&s.peek()!="-")){
+	        		 	newExp.add(s.pop());
 	        	 }
-	             s.push(oldExp.charAt(i));
+	             s.push(oldExp.elementAt(i));
 	             i++;
 	             break;
-	         case' ':
+	         case "sin":
+	         case "cos":
+	         case "tan":
+	        	 if(!s.empty()&&s.peek()!="+"&&s.peek()!="-"&&s.peek()!="*"&&s.peek()!="/"){
+	        		 newExp.add(s.pop());
+	        	 }
+	        	 s.push(oldExp.elementAt(i));
+	             i++;
+	         case " ":
 	        	 break;
 	         default:
-                 while((i<oldExp.length())&&((oldExp.charAt(i)<='9'&&oldExp.charAt(i)>='0')||oldExp.charAt(i)=='.')){
-                	 newExp+=oldExp.charAt(i);
+                 while((i<oldExp.size())&&((oldExp.elementAt(i).toCharArray()[0]<='9')&&
+                		 (oldExp.elementAt(i).toCharArray()[0])>='0')||
+                		 oldExp.elementAt(i).toCharArray()[0]=='.'){
+                	 newExp.add(oldExp.elementAt(i));
                 	 i++;
                   }
-                  newExp+='#';//把属于一个数字的字符分隔开，可以计算带有多位数字的表达式
+                  newExp.add("#");//把属于一个数字的字符分隔开，可以计算带有多位数字的表达式
                   break;
 			}
 		}
-		while(!s.empty()&&s.peek()!='(') {
-	              newExp+=s.pop();
+		while(!s.empty()) {
+	              newExp.add(s.pop());
 	       }
 		return newExp;
 	}
 	
 	//根据后缀表达式计算
-	public double calculate(String newExp){
+	public double calculate(Vector<String> newExp){
 		Stack<Double> s=new <Double>Stack();
 	    int i=0,k=0;
 	    double a,b,c;
 	    double d;
-	    while(i<newExp.length()){
-	        switch(newExp.charAt(i)){
-	        		case'+':
+	    while(i<newExp.size()){
+	        switch(newExp.elementAt(i)){
+	        		case"+":
 	                        a=s.pop();
 	                        b=s.pop();
 	                        c=b+a;
 	                        s.push(c);//结果存到栈顶
 	                        break;
 
-	                case'-':
+	                case"-":
 		                	a=s.pop();
 	                        b=s.pop();
 	                        c=b-a;
 	                        s.push(c);//结果存到栈顶
 	                        break;
-	                case'*':
+	                case"*":
 		                	a=s.pop();
 	                        b=s.pop();
 	                        c=b*a;
 	                        s.push(c);//结果存到栈顶
 	                        break;
-	                case'/':
+	                case"/":
 		                	a=s.pop();
 	                        b=s.pop();
 	                        if(a==0){
@@ -218,6 +232,21 @@ public class MainFrame extends JFrame{
 	                        c=b/a;
 	                        s.push(c);
 	                        break;
+	                case"sin":
+	                		a=s.pop();
+	                		c=Math.sin(a);
+	                		s.push(c);
+	                		break;
+	                case"cos":
+                		a=s.pop();
+                		c=Math.cos(a);
+                		s.push(c);
+                		break;
+	                case"tan":
+                		a=s.pop();
+                		c=Math.tan(a);
+                		s.push(c);
+                		break;
 	                default:
 	                       /*----------------------------------------------------------------
 	                       字符到数字的算法实现：
@@ -226,17 +255,18 @@ public class MainFrame extends JFrame{
 	                         要记录从小数点到下一个‘#’的位数k，最后的值要除以pow(10,k)，把d变回小数
 	                       -----------------------------------------------------------------*/
 	                        d=0;
-	                        while((i<newExp.length())&&((newExp.charAt(i)<='9'&&newExp.charAt(i)>='0')||newExp.charAt(i)=='.'))
-	                        {
-	                                if(newExp.charAt(i)=='.')
+	                        while((i<newExp.size())&&((newExp.elementAt(i).toCharArray()[0]<='9')&&
+	                       		 (newExp.elementAt(i).toCharArray()[0])>='0')||
+	                       		 newExp.elementAt(i).toCharArray()[0]=='.'){
+	                                if(newExp.elementAt(i)==".")
 	                                {
 	                                    i++;
 	                                    k=i;//把j的值保留
-	                                    while(newExp.charAt(k)!='#')
+	                                    while(newExp.elementAt(k)!="#")
 	                                        k++;
 	                                    k=k-i;//两者的差为小数点后的位数
 	                                }
-	                                d=10*d+newExp.charAt(i)-'0';//字符到数字的转换
+	                                d=10*d+newExp.elementAt(i).toCharArray()[0]-'0';//字符到数字的转换
 	                                i++;
 	                        }
 	                        d=d/Math.pow(10, k);
