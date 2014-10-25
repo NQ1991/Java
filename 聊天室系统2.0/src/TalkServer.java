@@ -98,6 +98,7 @@ public class TalkServer {
 					}
 
 				} catch (EOFException eof) {
+					//heheh
 					connected = false;
 				}catch (IOException e) {
 					e.printStackTrace();
