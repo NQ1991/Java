@@ -109,8 +109,7 @@ public class TalkClient extends Frame {
 				}
 			} catch (SocketException e) {
 				System.out.println("客户端断开连接!");
-				System.out.println("客户端断开连接!");
-				System.out.println("客户端断开连接!");
+				
 				connected = false;
 			} catch (EOFException e) {
 				System.out.println("客户端断开连接!");
